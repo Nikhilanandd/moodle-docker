@@ -1,0 +1,54 @@
+services:
+  moodle:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: 8.3
+    image: moodle-5.0.1-php83:latest
+    container_name: moodle-501
+    ports:
+      - "8080:80"
+    volumes:
+      - moodledata:/var/www/moodledata
+    environment:
+      - MOODLE_DOCKER=1
+    networks:
+      - moodle-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:15
+    container_name: moodle-postgres
+    environment:
+      POSTGRES_DB: moodle
+      POSTGRES_USER: moodleuser
+      POSTGRES_PASSWORD: moodlepass
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    networks:
+      - moodle-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: moodle-redis
+    networks:
+      - moodle-network
+    restart: unless-stopped
+
+volumes:
+  moodledata:
+  postgresdata:
+
+networks:
+  moodle-network:
